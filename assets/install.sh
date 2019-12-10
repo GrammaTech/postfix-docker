@@ -27,6 +27,7 @@ tail -f /var/log/mail.log
 EOF
 chmod +x /opt/postfix.sh
 postconf -e myhostname=$maildomain
+postconf -e relayhost=smtp-inside.grammatech.com
 postconf -F '*/*/chroot = n'
 
 ############
@@ -37,7 +38,7 @@ postconf -F '*/*/chroot = n'
 # /etc/postfix/main.cf
 postconf -e smtpd_sasl_auth_enable=yes
 postconf -e broken_sasl_auth_clients=yes
-postconf -e smtpd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination
+postconf -e smtpd_recipient_restrictions=permit_sasl_authenticated,reject
 # smtpd.conf
 cat >> /etc/postfix/sasl/smtpd.conf <<EOF
 pwcheck_method: auxprop
@@ -60,12 +61,21 @@ if [[ -n "$(find /etc/postfix/certs -iname *.crt)" && -n "$(find /etc/postfix/ce
   postconf -e smtpd_tls_key_file=$(find /etc/postfix/certs -iname *.key)
   chmod 400 /etc/postfix/certs/*.*
   # /etc/postfix/master.cf
-  postconf -M submission/inet="submission   inet   n   -   n   -   -   smtpd"
+  postconf -M submission/inet="submission   inet   n   -   n   -   -   smtpd -v"
   postconf -P "submission/inet/syslog_name=postfix/submission"
   postconf -P "submission/inet/smtpd_tls_security_level=encrypt"
   postconf -P "submission/inet/smtpd_sasl_auth_enable=yes"
   postconf -P "submission/inet/milter_macro_daemon_name=ORIGINATING"
-  postconf -P "submission/inet/smtpd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination"
+  postconf -P "submission/inet/smtpd_recipient_restrictions=permit_sasl_authenticated,reject"
+
+  postconf -M smtps/inet="smtps       inet  n       -       n       -       -       smtpd -v"
+  postconf -P "smtps/inet/syslog_name=postfix/smtps"
+  postconf -P "smtps/inet/smtpd_tls_security_level=encrypt"
+  postconf -P "smtps/inet/smtpd_use_tls=yes"
+  postconf -P "smtps/inet/smtpd_tls_wrappermode=yes"
+  postconf -P "smtps/inet/smtpd_sasl_auth_enable=yes"
+  postconf -P "smtps/inet/milter_macro_daemon_name=ORIGINATING"
+  postconf -P "smtps/inet/smtpd_recipient_restrictions=permit_sasl_authenticated,reject"
 fi
 
 #############
