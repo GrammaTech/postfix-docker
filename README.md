@@ -5,6 +5,9 @@ The commands below will listen on 43025, 43465, and 43587.
 Be sure to adjust the smtp_user part with a username and password of
 your choosing.
 
+The maildomain and the certificate's subject name should match the fully
+qualified domain name of the machine running the container.
+
 ```bash
 cd assets/certs
 openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
@@ -27,4 +30,6 @@ docker run \
 
 # Follow log
 docker exec -ti postfix tail -f /var/log/mail.log
+
+docker kill postfix
 ```
